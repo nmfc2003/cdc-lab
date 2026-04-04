@@ -126,6 +126,45 @@ services:
         echo "Connector registration complete"
     restart: "no"
 
+  flink-jobmanager:
+    build:
+      context: .
+      dockerfile: flink/Dockerfile
+    container_name: cdc-flink-jobmanager
+    command: jobmanager
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: flink-jobmanager
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        rest.address: flink-jobmanager
+        rest.port: 8081
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./flink/sql:/opt/flink/sql
+      - ./data/iceberg:/data/iceberg
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  flink-taskmanager:
+    build:
+      context: .
+      dockerfile: flink/Dockerfile
+    container_name: cdc-flink-taskmanager
+    command: taskmanager
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: flink-jobmanager
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.numberOfTaskSlots: 4
+    volumes:
+      - ./flink/sql:/opt/flink/sql
+      - ./data/iceberg:/data/iceberg
+    depends_on:
+      flink-jobmanager:
+        condition: service_started
+
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2
     container_name: cdc-kafka-ui
