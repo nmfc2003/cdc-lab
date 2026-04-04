@@ -58,3 +58,34 @@ Hard reset (containers + volumes):
 
 
 > Note: Bitnami moved public Kafka images to `bitnamilegacy/kafka` (legacy/no updates).
+
+## Flink + Iceberg Bronze Pipeline
+
+This lab also includes a local Flink SQL pipeline that reads Debezium CDC events from Kafka and writes a bronze Iceberg table on the local filesystem.
+
+### Start
+1. Start the core CDC stack:
+   ```bash
+   ./scripts/up.sh
+   ```
+2. Start Flink + run SQL initialization:
+   ```bash
+   ./scripts/run_flink_sql.sh
+   ```
+
+### Run SQL manually
+If you want to execute SQL manually:
+```bash
+docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh
+```
+
+### Verify Iceberg data
+Run:
+```bash
+./scripts/check_iceberg.sh
+```
+This lists Iceberg files in `/data/iceberg/orders_bronze` and prints sample rows from `orders_bronze`.
+
+### Endpoints
+- Flink UI: `http://localhost:8081`
+- Kafka bootstrap (in-network): `kafka:9092`
