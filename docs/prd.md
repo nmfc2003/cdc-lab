@@ -36,7 +36,7 @@ We need a small, self-contained lab that:
 - Local machine execution only (Mac + Docker Desktop).
 - One PostgreSQL instance configured for logical replication.
 - One Kafka broker suitable for local development.
-- **Bitnami Kafka** image/distribution as the default local broker choice.
+- **Bitnami Kafka** image/distribution as the default local broker choice (using public legacy image availability for local-only demos).
 - One Kafka Connect worker with Debezium PostgreSQL connector enabled.
 - **Debezium Connect** image/distribution as the default connector runtime choice.
 - One demo schema/table centered on `orders`.
@@ -206,7 +206,7 @@ System health is defined as all of the following being true simultaneously:
 - **Risk:** Local environment resource constraints causing unstable startup.
   - **Mitigation:** Keep scope minimal (single broker, single connect worker).
 - **Risk:** Connector configuration drift or plugin mismatch.
-  - **Mitigation:** Pin Bitnami Kafka and Debezium Connect image versions and document expected versions.
+  - **Mitigation:** Use documented, tested image tags and allow local override when upstream tags are retired.
 - **Risk:** User confusion around topic names/event format.
   - **Mitigation:** Enforce fixed topic naming and minimum message contract (`before`, `after`, `op`) in docs and acceptance criteria.
 
