@@ -4,11 +4,19 @@ A deterministic local lab that captures row-level changes from PostgreSQL and pu
 
 ## Stack
 - PostgreSQL 16 (logical replication enabled)
-- Bitnami Kafka 3.7.1 (single-node KRaft)
+- Bitnami Kafka (single-node KRaft, configurable via `KAFKA_IMAGE`)
 - Debezium Connect 2.7.3.Final
 - Kafka UI 0.7.2
 
 ## Quickstart
+
+### Optional image pin override
+If you want to pin a specific Kafka image tag locally, export `KAFKA_IMAGE` before startup:
+```bash
+export KAFKA_IMAGE=bitnami/kafka:<tag>
+./scripts/up.sh
+```
+
 1. Start the stack:
    ```bash
    ./scripts/up.sh
