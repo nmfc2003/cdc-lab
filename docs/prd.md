@@ -36,7 +36,7 @@ We need a small, self-contained lab that:
 - Local machine execution only (Mac + Docker Desktop).
 - One PostgreSQL instance configured for logical replication.
 - One Kafka broker suitable for local development.
-- **Bitnami Kafka** image/distribution as the default local broker choice.
+- **Bitnami Kafka** image/distribution as the default local broker choice (using public legacy image availability for local-only demos).
 - One Kafka Connect worker with Debezium PostgreSQL connector enabled.
 - **Debezium Connect** image/distribution as the default connector runtime choice.
 - One demo schema/table centered on `orders`.
@@ -83,7 +83,7 @@ We need a small, self-contained lab that:
 - Connector must capture change events from the `orders` table.
 - Connector runtime is fixed to **Debezium Connect** image/distribution for this lab.
 - Required connector identifiers must be explicitly configured and documented as:
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
 
@@ -91,7 +91,7 @@ We need a small, self-contained lab that:
 - Insert, update, and delete operations on `orders` must each produce corresponding CDC events in Kafka.
 - Events must include sufficient payload structure to distinguish operation type.
 - Topic naming convention is fixed to Debezium default pattern using the required server name:
-  - `<database.server.name>.<schema>.<table>`
+  - `<topic.prefix>.<schema>.<table>`
   - For the demo `orders` table in `public` schema, expected topic is:
     - `cdc_lab_pg.public.orders`
 - Message contract must include, at minimum:
@@ -138,7 +138,7 @@ System health is defined as all of the following being true simultaneously:
 - **When** the user queries Kafka Connect connector status,
 - **Then** the Debezium PostgreSQL connector is in `RUNNING` state with no failed tasks,
 - **And** connector identifiers match:
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
 
@@ -176,7 +176,7 @@ System health is defined as all of the following being true simultaneously:
 4. **Register/Verify Debezium Connector**
    - Ensure PostgreSQL source connector is active and RUNNING.
    - Verify connector identifiers:
-     - `database.server.name=cdc_lab_pg`
+     - `topic.prefix=cdc_lab_pg`
      - `slot.name=cdc_lab_slot`
      - `publication.name=cdc_lab_publication`
 5. **Open Kafka Topic Consumer**
@@ -206,7 +206,7 @@ System health is defined as all of the following being true simultaneously:
 - **Risk:** Local environment resource constraints causing unstable startup.
   - **Mitigation:** Keep scope minimal (single broker, single connect worker).
 - **Risk:** Connector configuration drift or plugin mismatch.
-  - **Mitigation:** Pin Bitnami Kafka and Debezium Connect image versions and document expected versions.
+  - **Mitigation:** Use documented, tested image tags and allow local override when upstream tags are retired.
 - **Risk:** User confusion around topic names/event format.
   - **Mitigation:** Enforce fixed topic naming and minimum message contract (`before`, `after`, `op`) in docs and acceptance criteria.
 

@@ -6,7 +6,7 @@
   "database.user": "debezium",
   "database.password": "dbz",
   "database.dbname": "appdb",
-  "database.server.name": "cdc_lab_pg",
+  "topic.prefix": "cdc_lab_pg",
   "plugin.name": "pgoutput",
   "slot.name": "cdc_lab_slot",
   "publication.name": "cdc_lab_publication",
