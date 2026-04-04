@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TABLE_PATH="/data/iceberg/orders_bronze"
+TABLE_PATH="/data/iceberg/bronze/orders_bronze"
 
 echo "Listing Iceberg table files under ${TABLE_PATH}..."
 docker compose exec -T flink-jobmanager sh -lc "if [ -d '${TABLE_PATH}' ]; then find '${TABLE_PATH}' -maxdepth 3 -type f | sort; else echo 'Table path not found yet: ${TABLE_PATH}'; fi"
@@ -14,6 +14,7 @@ CREATE CATALOG local_iceberg WITH (
   'warehouse' = 'file:///data/iceberg'
 );
 USE CATALOG local_iceberg;
+USE bronze;
 SELECT * FROM orders_bronze LIMIT 10;
 SQL
 

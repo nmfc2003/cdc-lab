@@ -30,9 +30,11 @@ echo "Submitting SQL from ${SQL_FILE}..."
 tmp_out="$(mktemp)"
 trap 'rm -f "${tmp_out}"' EXIT
 
-docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh -f "${sql_in_container}" | tee "${tmp_out}"
+docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh -f "${sql_in_container}" 2>&1 | tee "${tmp_out}"
 
-if rg -q "\\[ERROR\\]" "${tmp_out}"; then
+# Portable, defensive SQL-client error detection.
+# Match common Flink SQL failures while avoiding dependency on ripgrep.
+if grep -Eqi '(^|[^[:alpha:]])(\[ERROR\]|Exception|TableException|ValidationException|SqlParserException|ProgramInvocationException)([^[:alpha:]]|$)' "${tmp_out}"; then
   echo "ERROR: Flink SQL execution reported errors. See output above." >&2
   exit 1
 fi
