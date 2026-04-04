@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-docker compose up -d postgres kafka kafka-connect kafka-ui
+docker compose up -d postgres kafka kafka-init kafka-connect kafka-ui
 
 echo "Waiting for Kafka Connect API..."
 until curl -fsS http://localhost:8083/connectors >/dev/null; do
