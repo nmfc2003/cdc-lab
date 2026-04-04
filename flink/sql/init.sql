@@ -34,6 +34,8 @@ CREATE CATALOG local_iceberg WITH (
 );
 
 USE CATALOG local_iceberg;
+CREATE DATABASE IF NOT EXISTS bronze;
+USE bronze;
 
 -- Bronze sink table
 CREATE TABLE IF NOT EXISTS orders_bronze (
@@ -44,8 +46,7 @@ CREATE TABLE IF NOT EXISTS orders_bronze (
   op STRING,
   source_ts_ms BIGINT
 ) WITH (
-  'format-version' = '2',
-  'location' = 'file:///data/iceberg/orders_bronze'
+  'format-version' = '2'
 );
 
 -- Map CDC events to bronze records (after for c/u/r, before for d)

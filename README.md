@@ -61,14 +61,18 @@ Hard reset (containers + volumes):
 
 ## Flink + Iceberg Bronze Pipeline
 
-This lab also includes a local Flink SQL pipeline that reads Debezium CDC events from Kafka and writes a bronze Iceberg table on the local filesystem.
+This lab also includes a local Flink SQL pipeline that reads Debezium CDC events from Kafka and writes a bronze Iceberg table on the local filesystem (`/data/iceberg` inside Flink containers, mounted from `./data/iceberg` on the host).
 
 ### Start
 1. Start the core CDC stack:
    ```bash
    ./scripts/up.sh
    ```
-2. Start Flink + run SQL initialization:
+2. Ensure the local warehouse directory exists:
+   ```bash
+   mkdir -p data/iceberg
+   ```
+3. Start Flink + run SQL initialization:
    ```bash
    ./scripts/run_flink_sql.sh
    ```
@@ -84,8 +88,17 @@ Run:
 ```bash
 ./scripts/check_iceberg.sh
 ```
-This lists Iceberg files in `/data/iceberg/orders_bronze` and prints sample rows from `orders_bronze`.
+This lists Iceberg files in `./data/iceberg/bronze/orders_bronze` and prints sample rows from `bronze.orders_bronze`.
 
 ### Endpoints
 - Flink UI: `http://localhost:8081`
 - Kafka bootstrap (in-network): `kafka:9092`
+
+
+### Flink dependency pins
+- Base image: `flink:1.18.1-scala_2.12-java11`
+- Iceberg runtime: `org.apache.iceberg:iceberg-flink-runtime-1.18:1.5.2`
+- Kafka SQL connector: `org.apache.flink:flink-sql-connector-kafka:3.1.0-1.18`
+- Hadoop support: `org.apache.flink:flink-shaded-hadoop-3-uber:3.3.4-18.0`
+
+These are pinned in `flink/Dockerfile` for deterministic local builds.
