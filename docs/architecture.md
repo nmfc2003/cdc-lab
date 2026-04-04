@@ -71,6 +71,32 @@ The design emphasizes:
 
 ---
 
+## Implemented Repository Structure
+
+```text
+.
+├─ docker-compose.yml
+├─ docs/
+│  ├─ prd.md
+│  ├─ architecture.md
+│  └─ decisions.md
+├─ connect/
+│  ├─ connect.env
+│  └─ debezium-orders-connector.json
+├─ postgres/init/
+│  ├─ 001-users.sql
+│  └─ 002-orders.sql
+└─ scripts/
+   ├─ up.sh
+   ├─ wait-for-health.sh
+   ├─ demo-orders-cdc.sh
+   └─ reset.sh
+```
+
+This repository currently keeps runtime artifacts at the repository root (instead of a `compose/` folder) to keep local commands concise for first-time users.
+
+---
+
 ## Docker Services Design
 
 ## 1) `postgres`
