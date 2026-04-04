@@ -49,7 +49,7 @@ Hard reset (containers + volumes):
 - `topic.prefix=cdc_lab_pg`
 - `slot.name=cdc_lab_slot`
 - `publication.name=cdc_lab_publication`
-- `publication.autocreate.mode=filtered`
+- `publication.autocreate.mode=disabled`
 
 ## Notes
 - Kafka host listener: `localhost:19092`

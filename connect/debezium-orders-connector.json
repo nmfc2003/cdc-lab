@@ -10,7 +10,7 @@
   "plugin.name": "pgoutput",
   "slot.name": "cdc_lab_slot",
   "publication.name": "cdc_lab_publication",
-  "publication.autocreate.mode": "filtered",
+  "publication.autocreate.mode": "disabled",
   "table.include.list": "public.orders",
   "tombstones.on.delete": "false",
   "include.schema.changes": "false",

@@ -170,7 +170,8 @@ Runs Debezium PostgreSQL source connector and streams changes into Kafka.
   - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
-  - `publication.autocreate.mode=filtered`
+  - `publication.autocreate.mode=disabled`
+  - `publication.autocreate.mode=disabled` assumes publication is pre-created in init SQL (`cdc_lab_publication`).
 - Capture scope limited to `public.orders` in v1 for deterministic demos.
 - Serialization kept JSON-focused for readability in local demos.
 - Delete semantics surfaced with Debezium `op` contract (`c/u/d`), with tombstone handling policy documented in `docs/decisions.md`.
@@ -314,8 +315,9 @@ System is considered healthy only when all are true:
   - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
-  - `publication.autocreate.mode=filtered`
+  - `publication.autocreate.mode=disabled`
 - Validate table include list targets `public.orders`.
+- Ensure publication exists and includes `public.orders` when autocreation is disabled.
 - Re-register connector with corrected config.
 
 ---
