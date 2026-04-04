@@ -26,7 +26,7 @@ services:
       retries: 20
 
   kafka:
-    image: bitnami/kafka:3.7
+    image: confluentinc/cp-kafka:7.6.1
     container_name: cdc-kafka
     environment:
       KAFKA_KRAFT_CLUSTER_ID: MDEyMzQ1Njc4OUFCQ0RFRg
