@@ -9,7 +9,7 @@ if [[ ! -f "${SQL_FILE}" ]]; then
 fi
 
 echo "Starting Flink services..."
-docker compose up -d flink-jobmanager flink-taskmanager
+docker compose up -d --build flink-jobmanager flink-taskmanager
 
 echo "Waiting for Flink JobManager REST API..."
 for _ in {1..90}; do
