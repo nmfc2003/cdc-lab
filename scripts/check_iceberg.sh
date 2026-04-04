@@ -8,7 +8,7 @@ docker compose exec -T flink-jobmanager sh -lc "if [ -d '${TABLE_PATH}' ]; then 
 
 TMP_SQL="$(mktemp)"
 cat > "${TMP_SQL}" <<'SQL'
-CREATE CATALOG IF NOT EXISTS local_iceberg WITH (
+CREATE CATALOG local_iceberg WITH (
   'type' = 'iceberg',
   'catalog-type' = 'hadoop',
   'warehouse' = 'file:///data/iceberg'

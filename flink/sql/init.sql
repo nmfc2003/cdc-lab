@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS orders_cdc_src (
 );
 
 -- Iceberg Hadoop catalog on local filesystem
-CREATE CATALOG IF NOT EXISTS local_iceberg WITH (
+CREATE CATALOG local_iceberg WITH (
   'type' = 'iceberg',
   'catalog-type' = 'hadoop',
   'warehouse' = 'file:///data/iceberg'

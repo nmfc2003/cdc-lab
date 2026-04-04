@@ -27,6 +27,14 @@ fi
 sql_in_container="/opt/flink/sql/$(basename "${SQL_FILE}")"
 
 echo "Submitting SQL from ${SQL_FILE}..."
-docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh -f "${sql_in_container}"
+tmp_out="$(mktemp)"
+trap 'rm -f "${tmp_out}"' EXIT
+
+docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh -f "${sql_in_container}" | tee "${tmp_out}"
+
+if rg -q "\\[ERROR\\]" "${tmp_out}"; then
+  echo "ERROR: Flink SQL execution reported errors. See output above." >&2
+  exit 1
+fi
 
 echo "Flink SQL submitted."
