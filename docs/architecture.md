@@ -71,6 +71,32 @@ The design emphasizes:
 
 ---
 
+## Implemented Repository Structure
+
+```text
+.
+├─ docker-compose.yml
+├─ docs/
+│  ├─ prd.md
+│  ├─ architecture.md
+│  └─ decisions.md
+├─ connect/
+│  ├─ connect.env
+│  └─ debezium-orders-connector.json
+├─ postgres/init/
+│  ├─ 001-users.sql
+│  └─ 002-orders.sql
+└─ scripts/
+   ├─ up.sh
+   ├─ wait-for-health.sh
+   ├─ demo-orders-cdc.sh
+   └─ reset.sh
+```
+
+This repository currently keeps runtime artifacts at the repository root (instead of a `compose/` folder) to keep local commands concise for first-time users.
+
+---
+
 ## Docker Services Design
 
 ## 1) `postgres`
@@ -101,7 +127,7 @@ Event broker for CDC topics.
 
 ### Required Characteristics
 - Single-node KRaft deployment (controller + broker combined for local simplicity).
-- Bitnami Kafka distribution (aligned with PRD).
+- Bitnami Kafka distribution (using the public legacy repo `bitnamilegacy/kafka` for local reproducibility).
 - Internal and external listeners configured for:
   - Inter-container communication.
   - Local host access from Mac terminal.
@@ -111,6 +137,7 @@ Event broker for CDC topics.
 - `advertised.listeners` must advertise both endpoints so each client class resolves the correct address.
 - `listener.security.protocol.map` must include mappings for both listener names and `inter.broker.listener.name` must point to the internal listener.
 - Persistent volume for broker state/logs.
+- Kafka image defaults to `bitnamilegacy/kafka:4.0.0-debian-12-r10` and supports override via `KAFKA_IMAGE` env var for explicit pinning.
 
 ### Topic Baseline
 - CDC topic of interest: `cdc_lab_pg.public.orders`.
@@ -123,7 +150,7 @@ Event broker for CDC topics.
 Runs Debezium PostgreSQL source connector and streams changes into Kafka.
 
 ### Required Characteristics
-- Debezium Connect image pinned.
+- Debezium Connect image pinned (Kafka image can be overridden by env var to avoid retired tags in local environments).
 - Single worker mode.
 - Connect internal topics explicitly configured (config/offset/status).
 - Internal topic names must be explicit and stable:
@@ -140,9 +167,10 @@ Runs Debezium PostgreSQL source connector and streams changes into Kafka.
 ### Connector Configuration Strategy (Orders CDC)
 - Connector class: Debezium PostgreSQL source connector.
 - Required identifiers (fixed):
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
+  - `publication.autocreate.mode=filtered`
 - Capture scope limited to `public.orders` in v1 for deterministic demos.
 - Serialization kept JSON-focused for readability in local demos.
 - Delete semantics surfaced with Debezium `op` contract (`c/u/d`), with tombstone handling policy documented in `docs/decisions.md`.
@@ -188,7 +216,7 @@ Human-friendly inspection of cluster health, topics, and messages.
 
 ## Topic Naming
 - Debezium topic naming convention:
-  - `<database.server.name>.<schema>.<table>`
+  - `<topic.prefix>.<schema>.<table>`
 - With fixed server name and `public.orders`, expected topic is:
   - `cdc_lab_pg.public.orders`
 
@@ -283,9 +311,10 @@ System is considered healthy only when all are true:
 
 ### Recovery
 - Validate required fields:
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
+  - `publication.autocreate.mode=filtered`
 - Validate table include list targets `public.orders`.
 - Re-register connector with corrected config.
 

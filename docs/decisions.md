@@ -64,7 +64,7 @@ Accepted
 
 ### Decision
 Standardize connector identity and replication linkage to:
-- `database.server.name=cdc_lab_pg`
+- `topic.prefix=cdc_lab_pg`
 - `slot.name=cdc_lab_slot`
 - `publication.name=cdc_lab_publication`
 
@@ -84,7 +84,7 @@ Accepted
 
 ### Decision
 Use Debezium default topic naming pattern:
-- `<database.server.name>.<schema>.<table>`
+- `<topic.prefix>.<schema>.<table>`
 - Expected `orders` topic: `cdc_lab_pg.public.orders`
 
 ### Rationale
@@ -93,7 +93,7 @@ Use Debezium default topic naming pattern:
 
 ### Consequences
 - Topic names are implementation-derived and verbose.
-- Any change to `database.server.name` changes all derived topic names.
+- Any change to `topic.prefix` changes all derived topic names.
 
 ---
 
