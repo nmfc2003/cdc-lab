@@ -193,3 +193,12 @@ We need a small, self-contained lab that:
 - No code artifacts.
 - No Docker Compose or infrastructure files.
 - No connector JSON payload/config implementation yet.
+
+### CDC Topic Contract
+
+- Topic name pattern: `cdc.public.orders`
+- Message format: Debezium envelope (before/after/op)
+- Operation types:
+    - c → insert
+    - u → update
+    - d → delete
