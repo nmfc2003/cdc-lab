@@ -3,10 +3,10 @@ FROM flink:1.18.1-scala_2.12-java11
 # Versions pinned for Flink 1.18.x compatibility.
 # - Iceberg runtime: built specifically for Flink 1.18
 # - Kafka SQL connector: Flink 1.18 line
-# - Hadoop shaded uber jar: Flink 1.18 line (needed for Hadoop catalog/filesystem classes)
+# - Hadoop client api/runtime: required by Iceberg Hadoop catalog
 ARG ICEBERG_FLINK_RUNTIME_VERSION=1.5.2
 ARG FLINK_SQL_KAFKA_VERSION=3.1.0-1.18
-ARG FLINK_SHADED_HADOOP_VERSION=3.3.4-18.0
+ARG HADOOP_VERSION=3.3.6
 ARG MAVEN_BASE_URL=https://repo.maven.apache.org/maven2
 
 RUN set -eux; \
@@ -28,5 +28,7 @@ RUN set -eux; \
       "${MAVEN_BASE_URL}/org/apache/iceberg/iceberg-flink-runtime-1.18/${ICEBERG_FLINK_RUNTIME_VERSION}/iceberg-flink-runtime-1.18-${ICEBERG_FLINK_RUNTIME_VERSION}.jar"; \
     fetch_jar "flink-sql-connector-kafka-${FLINK_SQL_KAFKA_VERSION}.jar" \
       "${MAVEN_BASE_URL}/org/apache/flink/flink-sql-connector-kafka/${FLINK_SQL_KAFKA_VERSION}/flink-sql-connector-kafka-${FLINK_SQL_KAFKA_VERSION}.jar"; \
-    fetch_jar "flink-shaded-hadoop-3-uber-${FLINK_SHADED_HADOOP_VERSION}.jar" \
-      "${MAVEN_BASE_URL}/org/apache/flink/flink-shaded-hadoop-3-uber/${FLINK_SHADED_HADOOP_VERSION}/flink-shaded-hadoop-3-uber-${FLINK_SHADED_HADOOP_VERSION}.jar"
+    fetch_jar "hadoop-client-api-${HADOOP_VERSION}.jar" \
+      "${MAVEN_BASE_URL}/org/apache/hadoop/hadoop-client-api/${HADOOP_VERSION}/hadoop-client-api-${HADOOP_VERSION}.jar"; \
+    fetch_jar "hadoop-client-runtime-${HADOOP_VERSION}.jar" \
+      "${MAVEN_BASE_URL}/org/apache/hadoop/hadoop-client-runtime/${HADOOP_VERSION}/hadoop-client-runtime-${HADOOP_VERSION}.jar"

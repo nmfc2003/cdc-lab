@@ -99,6 +99,6 @@ This lists Iceberg files in `./data/iceberg/bronze/orders_bronze` and prints sam
 - Base image: `flink:1.18.1-scala_2.12-java11`
 - Iceberg runtime: `org.apache.iceberg:iceberg-flink-runtime-1.18:1.5.2`
 - Kafka SQL connector: `org.apache.flink:flink-sql-connector-kafka:3.1.0-1.18`
-- Hadoop support: `org.apache.flink:flink-shaded-hadoop-3-uber:3.3.4-18.0`
+- Hadoop support: `org.apache.hadoop:hadoop-client-api:3.3.6` and `org.apache.hadoop:hadoop-client-runtime:3.3.6`
 
 These are pinned in `flink/Dockerfile` for deterministic local builds.
