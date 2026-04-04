@@ -83,7 +83,7 @@ We need a small, self-contained lab that:
 - Connector must capture change events from the `orders` table.
 - Connector runtime is fixed to **Debezium Connect** image/distribution for this lab.
 - Required connector identifiers must be explicitly configured and documented as:
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
 
@@ -91,7 +91,7 @@ We need a small, self-contained lab that:
 - Insert, update, and delete operations on `orders` must each produce corresponding CDC events in Kafka.
 - Events must include sufficient payload structure to distinguish operation type.
 - Topic naming convention is fixed to Debezium default pattern using the required server name:
-  - `<database.server.name>.<schema>.<table>`
+  - `<topic.prefix>.<schema>.<table>`
   - For the demo `orders` table in `public` schema, expected topic is:
     - `cdc_lab_pg.public.orders`
 - Message contract must include, at minimum:
@@ -138,7 +138,7 @@ System health is defined as all of the following being true simultaneously:
 - **When** the user queries Kafka Connect connector status,
 - **Then** the Debezium PostgreSQL connector is in `RUNNING` state with no failed tasks,
 - **And** connector identifiers match:
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
 
@@ -176,7 +176,7 @@ System health is defined as all of the following being true simultaneously:
 4. **Register/Verify Debezium Connector**
    - Ensure PostgreSQL source connector is active and RUNNING.
    - Verify connector identifiers:
-     - `database.server.name=cdc_lab_pg`
+     - `topic.prefix=cdc_lab_pg`
      - `slot.name=cdc_lab_slot`
      - `publication.name=cdc_lab_publication`
 5. **Open Kafka Topic Consumer**

@@ -46,9 +46,10 @@ Hard reset (containers + volumes):
 ```
 
 ## Expected Connector Identifiers
-- `database.server.name=cdc_lab_pg`
+- `topic.prefix=cdc_lab_pg`
 - `slot.name=cdc_lab_slot`
 - `publication.name=cdc_lab_publication`
+- `publication.autocreate.mode=filtered`
 
 ## Notes
 - Kafka host listener: `localhost:19092`

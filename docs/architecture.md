@@ -167,9 +167,10 @@ Runs Debezium PostgreSQL source connector and streams changes into Kafka.
 ### Connector Configuration Strategy (Orders CDC)
 - Connector class: Debezium PostgreSQL source connector.
 - Required identifiers (fixed):
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
+  - `publication.autocreate.mode=filtered`
 - Capture scope limited to `public.orders` in v1 for deterministic demos.
 - Serialization kept JSON-focused for readability in local demos.
 - Delete semantics surfaced with Debezium `op` contract (`c/u/d`), with tombstone handling policy documented in `docs/decisions.md`.
@@ -215,7 +216,7 @@ Human-friendly inspection of cluster health, topics, and messages.
 
 ## Topic Naming
 - Debezium topic naming convention:
-  - `<database.server.name>.<schema>.<table>`
+  - `<topic.prefix>.<schema>.<table>`
 - With fixed server name and `public.orders`, expected topic is:
   - `cdc_lab_pg.public.orders`
 
@@ -310,9 +311,10 @@ System is considered healthy only when all are true:
 
 ### Recovery
 - Validate required fields:
-  - `database.server.name=cdc_lab_pg`
+  - `topic.prefix=cdc_lab_pg`
   - `slot.name=cdc_lab_slot`
   - `publication.name=cdc_lab_publication`
+  - `publication.autocreate.mode=filtered`
 - Validate table include list targets `public.orders`.
 - Re-register connector with corrected config.
 

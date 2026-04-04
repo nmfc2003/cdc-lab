@@ -108,12 +108,21 @@ services:
       - sh
       - -c
       - |
+        set -eu
         echo "Waiting for Kafka Connect API..."
         until curl -fsS http://kafka-connect:8083/connectors >/dev/null; do sleep 2; done
         echo "Registering Debezium connector config..."
-        curl -fsS -X PUT -H 'Content-Type: application/json' \
+        tmp_resp=$(mktemp)
+        http_code=$(curl -sS -o "$tmp_resp" -w '%{http_code}' -X PUT -H 'Content-Type: application/json' \
           --data @/config/debezium-orders-connector.json \
-          http://kafka-connect:8083/connectors/orders-cdc/config
+          http://kafka-connect:8083/connectors/orders-cdc/config)
+        if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+          echo "Connector registration failed (HTTP $http_code):"
+          cat "$tmp_resp"
+          rm -f "$tmp_resp"
+          exit 1
+        fi
+        rm -f "$tmp_resp"
         echo "Connector registration complete"
     restart: "no"
 
