@@ -127,7 +127,7 @@ Event broker for CDC topics.
 
 ### Required Characteristics
 - Single-node KRaft deployment (controller + broker combined for local simplicity).
-- Bitnami Kafka distribution (aligned with PRD).
+- Bitnami Kafka distribution (using the public legacy repo `bitnamilegacy/kafka` for local reproducibility).
 - Internal and external listeners configured for:
   - Inter-container communication.
   - Local host access from Mac terminal.
@@ -137,7 +137,7 @@ Event broker for CDC topics.
 - `advertised.listeners` must advertise both endpoints so each client class resolves the correct address.
 - `listener.security.protocol.map` must include mappings for both listener names and `inter.broker.listener.name` must point to the internal listener.
 - Persistent volume for broker state/logs.
-- Kafka image defaults to `bitnami/kafka:latest` and supports override via `KAFKA_IMAGE` env var for explicit pinning.
+- Kafka image defaults to `bitnamilegacy/kafka:4.0.0-debian-12-r10` and supports override via `KAFKA_IMAGE` env var for explicit pinning.
 
 ### Topic Baseline
 - CDC topic of interest: `cdc_lab_pg.public.orders`.

@@ -36,7 +36,7 @@ We need a small, self-contained lab that:
 - Local machine execution only (Mac + Docker Desktop).
 - One PostgreSQL instance configured for logical replication.
 - One Kafka broker suitable for local development.
-- **Bitnami Kafka** image/distribution as the default local broker choice.
+- **Bitnami Kafka** image/distribution as the default local broker choice (using public legacy image availability for local-only demos).
 - One Kafka Connect worker with Debezium PostgreSQL connector enabled.
 - **Debezium Connect** image/distribution as the default connector runtime choice.
 - One demo schema/table centered on `orders`.

@@ -26,7 +26,7 @@ services:
       retries: 20
 
   kafka:
-    image: ${KAFKA_IMAGE:-bitnami/kafka:latest}
+    image: ${KAFKA_IMAGE:-bitnamilegacy/kafka:4.0.0-debian-12-r10}
     container_name: cdc-kafka
     environment:
       KAFKA_ENABLE_KRAFT: "yes"
@@ -54,7 +54,7 @@ services:
       retries: 20
 
   kafka-init:
-    image: ${KAFKA_IMAGE:-bitnami/kafka:latest}
+    image: ${KAFKA_IMAGE:-bitnamilegacy/kafka:4.0.0-debian-12-r10}
     container_name: cdc-kafka-init
     depends_on:
       kafka:
