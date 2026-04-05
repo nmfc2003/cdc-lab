@@ -25,7 +25,7 @@ CREATE DATABASE IF NOT EXISTS local_iceberg.bronze;
 
 -- Bronze is append-only by contract.
 CREATE TABLE IF NOT EXISTS local_iceberg.bronze.orders_bronze (
-  kafka_event_ts_ms BIGINT,
+  kafka_event_ts_ms TIMESTAMP_LTZ(3),
   op STRING,
   order_id BIGINT,
   customer_id BIGINT,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS local_iceberg.bronze.orders_bronze (
 
 INSERT INTO local_iceberg.bronze.orders_bronze
 SELECT
-  CAST(kafka_event_ts_ms AS BIGINT) AS kafka_event_ts_ms,
+  kafka_event_ts_ms AS kafka_event_ts_ms,
   COALESCE(JSON_VALUE(raw_json, '$.payload.op'), JSON_VALUE(raw_json, '$.op')) AS op,
   CAST(
     CASE
