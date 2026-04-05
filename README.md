@@ -68,9 +68,9 @@ This lab also includes a local Flink SQL pipeline that reads Debezium CDC events
    ```bash
    ./scripts/up.sh
    ```
-2. Ensure the local warehouse directory exists:
+2. Ensure local data directories exist:
    ```bash
-   mkdir -p data/iceberg
+   mkdir -p data/iceberg data/flink-checkpoints
    ```
 3. Start Flink + run SQL initialization:
    ```bash
@@ -89,6 +89,9 @@ Run:
 ./scripts/check_iceberg.sh
 ```
 This lists Iceberg files in `./data/iceberg/bronze/orders_bronze` and prints sample rows from `bronze.orders_bronze`.
+
+### Checkpointing and Iceberg commits
+Iceberg commits occur on Flink checkpoints. This lab enables periodic exactly-once checkpoints every 10 seconds and stores checkpoint state in `file:///data/flink-checkpoints` (mapped to `./data/flink-checkpoints` on the host) so commits can complete reliably during streaming writes.
 
 ### Endpoints
 - Flink UI: `http://localhost:8081`

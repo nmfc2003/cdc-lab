@@ -138,11 +138,18 @@ services:
         jobmanager.rpc.address: flink-jobmanager
         rest.address: flink-jobmanager
         rest.port: 8081
+        execution.checkpointing.interval: 10s
+        execution.checkpointing.mode: EXACTLY_ONCE
+        execution.checkpointing.min-pause: 5s
+        execution.checkpointing.timeout: 1min
+        execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+        state.checkpoints.dir: file:///data/flink-checkpoints
     ports:
       - "8081:8081"
     volumes:
       - ./flink/sql:/opt/flink/sql
       - ./data/iceberg:/data/iceberg
+      - ./data/flink-checkpoints:/data/flink-checkpoints
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -158,9 +165,16 @@ services:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: flink-jobmanager
         taskmanager.numberOfTaskSlots: 4
+        execution.checkpointing.interval: 10s
+        execution.checkpointing.mode: EXACTLY_ONCE
+        execution.checkpointing.min-pause: 5s
+        execution.checkpointing.timeout: 1min
+        execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+        state.checkpoints.dir: file:///data/flink-checkpoints
     volumes:
       - ./flink/sql:/opt/flink/sql
       - ./data/iceberg:/data/iceberg
+      - ./data/flink-checkpoints:/data/flink-checkpoints
     depends_on:
       flink-jobmanager:
         condition: service_started
