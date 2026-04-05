@@ -45,7 +45,7 @@ Before running this runbook:
 To ensure deterministic results:
 
 ```
-./scripts/reset.sh
+./scripts/reset_hard.sh
 rm -f output/orders_cdc.jsonl
 ```
 
