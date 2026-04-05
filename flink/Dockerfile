@@ -3,10 +3,11 @@ FROM flink:1.18.1-scala_2.12-java11
 # Versions pinned for Flink 1.18.x compatibility.
 # - Iceberg runtime: built specifically for Flink 1.18
 # - Kafka SQL connector: Flink 1.18 line
-# - Hadoop client api/runtime: required by Iceberg Hadoop catalog
+# - Hadoop client api/runtime + commons-logging: required by Iceberg Hadoop catalog
 ARG ICEBERG_FLINK_RUNTIME_VERSION=1.5.2
 ARG FLINK_SQL_KAFKA_VERSION=3.1.0-1.18
 ARG HADOOP_VERSION=3.3.6
+ARG COMMONS_LOGGING_VERSION=1.2
 ARG MAVEN_BASE_URL=https://repo.maven.apache.org/maven2
 
 RUN set -eux; \
@@ -31,4 +32,6 @@ RUN set -eux; \
     fetch_jar "hadoop-client-api-${HADOOP_VERSION}.jar" \
       "${MAVEN_BASE_URL}/org/apache/hadoop/hadoop-client-api/${HADOOP_VERSION}/hadoop-client-api-${HADOOP_VERSION}.jar"; \
     fetch_jar "hadoop-client-runtime-${HADOOP_VERSION}.jar" \
-      "${MAVEN_BASE_URL}/org/apache/hadoop/hadoop-client-runtime/${HADOOP_VERSION}/hadoop-client-runtime-${HADOOP_VERSION}.jar"
+      "${MAVEN_BASE_URL}/org/apache/hadoop/hadoop-client-runtime/${HADOOP_VERSION}/hadoop-client-runtime-${HADOOP_VERSION}.jar"; \
+    fetch_jar "commons-logging-${COMMONS_LOGGING_VERSION}.jar" \
+      "${MAVEN_BASE_URL}/commons-logging/commons-logging/${COMMONS_LOGGING_VERSION}/commons-logging-${COMMONS_LOGGING_VERSION}.jar"

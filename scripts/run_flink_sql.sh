@@ -34,7 +34,7 @@ docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh -f "${sql_i
 
 # Portable, defensive SQL-client error detection.
 # Match common Flink SQL failures while avoiding dependency on ripgrep.
-if grep -Eqi '(^|[^[:alpha:]])(\[ERROR\]|Exception|TableException|ValidationException|SqlParserException|ProgramInvocationException)([^[:alpha:]]|$)' "${tmp_out}"; then
+if grep -Eqi '\[ERROR\]|Could not execute SQL statement|ClassNotFoundException|TableException|ValidationException|SqlParserException|ProgramInvocationException|Exception in thread' "${tmp_out}"; then
   echo "ERROR: Flink SQL execution reported errors. See output above." >&2
   exit 1
 fi
