@@ -4,8 +4,8 @@ A deterministic local lab for learning CDC end to end:
 
 1. PostgreSQL emits row changes (logical replication)
 2. Debezium in Kafka Connect captures changes into Kafka
-3. Flink SQL reads Debezium events
-4. Iceberg sink writes bronze table data on local filesystem
+3. Flink SQL reads Kafka values as raw JSON append events
+4. Flink SQL flattens Debezium envelopes into append-only bronze rows in Iceberg
 
 ## Stack
 - PostgreSQL 16 (logical replication enabled)
@@ -14,6 +14,22 @@ A deterministic local lab for learning CDC end to end:
 - Flink 1.18.1
 - Iceberg Flink runtime 1.5.2 (Hadoop catalog on local FS)
 - Kafka UI 0.7.2
+
+## Bronze ingestion contract (important)
+
+The bronze table is intentionally **append-only** and does **not** use CDC changelog semantics at the Flink source layer.
+
+Why:
+- Debezium emits CDC envelopes intended for downstream stateful upsert/delete consumers.
+- Iceberg bronze in this lab is a raw historical event log, so every Kafka message should append one row.
+- Treating Debezium as a changelog source can produce zero-data-file commits when updates/deletes are interpreted as retractions instead of append events.
+
+How this lab implements bronze:
+- Kafka source uses `value.format = raw` to ingest each message as `raw_json` text.
+- SQL manually parses envelope fields (`op`, `before`, `after`, `source.ts_ms`) via `JSON_VALUE`.
+- Insert target has no primary key and no merge/upsert/delete behavior.
+- Update/delete Debezium events are still appended as bronze rows (using `before` values for `d`).
+
 
 ## State contract (explicit)
 
@@ -176,6 +192,37 @@ python3 scripts/tail-orders.py --mode replay
 ```
 
 ---
+
+
+### Verify bronze append behavior end-to-end
+1. Insert one fresh PostgreSQL row.
+   ```bash
+   docker compose exec -T postgres psql -U app -d appdb -c "\
+   INSERT INTO public.orders (customer_id, status, amount) VALUES (900001, 'NEW', 42.50);"
+   ```
+2. Verify Kafka received the event.
+   ```bash
+   docker compose exec -T kafka /opt/bitnami/kafka/bin/kafka-console-consumer.sh \
+     --bootstrap-server kafka:9092 \
+     --topic cdc_lab_pg.public.orders \
+     --from-beginning \
+     --timeout-ms 10000 | tail -n 5
+   ```
+3. Verify Flink checkpoints are completing.
+   ```bash
+   ./scripts/status.sh
+   ```
+4. Verify Iceberg data/parquet files exist.
+   ```bash
+   ./scripts/check_iceberg.sh
+   find data/iceberg -type f | rg '\\.parquet$|metadata\\.json$'
+   ```
+5. Verify bronze row count increases.
+   ```bash
+   docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh -f /opt/flink/sql/init.sql
+   # then in SQL client:
+   # SELECT COUNT(*) FROM local_iceberg.bronze.orders_bronze;
+   ```
 
 ## Manual checks
 
