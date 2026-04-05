@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS local_iceberg.bronze.orders_bronze (
 
 INSERT INTO local_iceberg.bronze.orders_bronze
 SELECT
-  CAST(UNIX_TIMESTAMP(kafka_event_ts_ms) * 1000 AS BIGINT) AS kafka_event_ts_ms,
+  CAST(kafka_event_ts_ms AS BIGINT) AS kafka_event_ts_ms,
   COALESCE(JSON_VALUE(raw_json, '$.payload.op'), JSON_VALUE(raw_json, '$.op')) AS op,
   CAST(
     CASE
