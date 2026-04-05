@@ -1,16 +1,20 @@
--- Kafka CDC source (Debezium JSON envelope)
+-- Kafka CDC source (Debezium JSON envelope with schema+payload)
 CREATE TABLE IF NOT EXISTS orders_cdc_src (
   `before` ROW<
-    id BIGINT,
+    order_id BIGINT,
     customer_id BIGINT,
     status STRING,
-    amount STRING
+    amount STRING,
+    created_at STRING,
+    updated_at STRING
   >,
   `after` ROW<
-    id BIGINT,
+    order_id BIGINT,
     customer_id BIGINT,
     status STRING,
-    amount STRING
+    amount STRING,
+    created_at STRING,
+    updated_at STRING
   >,
   op STRING,
   source ROW<
@@ -23,7 +27,7 @@ CREATE TABLE IF NOT EXISTS orders_cdc_src (
   'properties.group.id' = 'flink-orders-bronze',
   'scan.startup.mode' = 'earliest-offset',
   'value.format' = 'debezium-json',
-  'value.debezium-json.schema-include' = 'false'
+  'value.debezium-json.schema-include' = 'true'
 );
 
 -- Iceberg Hadoop catalog on local filesystem
@@ -33,12 +37,9 @@ CREATE CATALOG local_iceberg WITH (
   'warehouse' = 'file:///data/iceberg'
 );
 
-USE CATALOG local_iceberg;
-CREATE DATABASE IF NOT EXISTS bronze;
-USE bronze;
+CREATE DATABASE IF NOT EXISTS local_iceberg.bronze;
 
--- Bronze sink table
-CREATE TABLE IF NOT EXISTS orders_bronze (
+CREATE TABLE IF NOT EXISTS local_iceberg.bronze.orders_bronze (
   order_id BIGINT,
   customer_id BIGINT,
   status STRING,
@@ -49,15 +50,14 @@ CREATE TABLE IF NOT EXISTS orders_bronze (
   'format-version' = '2'
 );
 
--- Map CDC events to bronze records (after for c/u/r, before for d)
-INSERT INTO orders_bronze
+INSERT INTO local_iceberg.bronze.orders_bronze
 SELECT
-  CASE WHEN op = 'd' THEN `before`.id ELSE `after`.id END AS order_id,
+  CASE WHEN op = 'd' THEN `before`.order_id ELSE `after`.order_id END AS order_id,
   CASE WHEN op = 'd' THEN `before`.customer_id ELSE `after`.customer_id END AS customer_id,
   CASE WHEN op = 'd' THEN `before`.status ELSE `after`.status END AS status,
   CASE WHEN op = 'd' THEN `before`.amount ELSE `after`.amount END AS amount,
   op,
   source.ts_ms AS source_ts_ms
-FROM orders_cdc_src
+FROM default_catalog.default_database.orders_cdc_src
 WHERE (op IN ('c', 'u', 'r') AND `after` IS NOT NULL)
    OR (op = 'd' AND `before` IS NOT NULL);
