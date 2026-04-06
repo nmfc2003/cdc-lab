@@ -1,9 +1,9 @@
 -- Kafka source for bronze: ingest each Kafka value as a raw JSON append event.
--- We intentionally avoid Debezium changelog semantics here so one Kafka message
+-- We intentionally avoid Debezium changelog semantics so one Kafka message
 -- maps to exactly one appended Iceberg row in bronze.
 CREATE TABLE IF NOT EXISTS orders_cdc_raw_src (
   raw_json STRING,
-  kafka_event_ts_ms TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+  kafka_event_ts TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
 ) WITH (
   'connector' = 'kafka',
   'topic' = 'cdc_lab_pg.public.orders',
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS orders_cdc_raw_src (
   'value.raw.charset' = 'UTF-8'
 );
 
--- Iceberg Hadoop catalog on local filesystem
+-- Iceberg Hadoop catalog on local filesystem.
 CREATE CATALOG local_iceberg WITH (
   'type' = 'iceberg',
   'catalog-type' = 'hadoop',
@@ -25,12 +25,12 @@ CREATE DATABASE IF NOT EXISTS local_iceberg.bronze;
 
 -- Bronze is append-only by contract.
 CREATE TABLE IF NOT EXISTS local_iceberg.bronze.orders_bronze (
-  kafka_event_ts_ms TIMESTAMP_LTZ(3),
+  kafka_event_ts TIMESTAMP_LTZ(3),
   op STRING,
   order_id BIGINT,
   customer_id BIGINT,
   status STRING,
-  amount STRING,
+  amount DECIMAL(12,2),
   source_ts_ms BIGINT,
   raw_json STRING
 ) WITH (
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS local_iceberg.bronze.orders_bronze (
 
 INSERT INTO local_iceberg.bronze.orders_bronze
 SELECT
-  kafka_event_ts_ms AS kafka_event_ts_ms,
+  kafka_event_ts,
   COALESCE(JSON_VALUE(raw_json, '$.payload.op'), JSON_VALUE(raw_json, '$.op')) AS op,
   CAST(
     CASE
@@ -60,11 +60,13 @@ SELECT
       THEN COALESCE(JSON_VALUE(raw_json, '$.payload.before.status'), JSON_VALUE(raw_json, '$.before.status'))
     ELSE COALESCE(JSON_VALUE(raw_json, '$.payload.after.status'), JSON_VALUE(raw_json, '$.after.status'))
   END AS status,
-  CASE
-    WHEN COALESCE(JSON_VALUE(raw_json, '$.payload.op'), JSON_VALUE(raw_json, '$.op')) = 'd'
-      THEN COALESCE(JSON_VALUE(raw_json, '$.payload.before.amount'), JSON_VALUE(raw_json, '$.before.amount'))
-    ELSE COALESCE(JSON_VALUE(raw_json, '$.payload.after.amount'), JSON_VALUE(raw_json, '$.after.amount'))
-  END AS amount,
+  CAST(
+    CASE
+      WHEN COALESCE(JSON_VALUE(raw_json, '$.payload.op'), JSON_VALUE(raw_json, '$.op')) = 'd'
+        THEN COALESCE(JSON_VALUE(raw_json, '$.payload.before.amount'), JSON_VALUE(raw_json, '$.before.amount'))
+      ELSE COALESCE(JSON_VALUE(raw_json, '$.payload.after.amount'), JSON_VALUE(raw_json, '$.after.amount'))
+    END AS DECIMAL(12,2)
+  ) AS amount,
   CAST(
     COALESCE(JSON_VALUE(raw_json, '$.payload.source.ts_ms'), JSON_VALUE(raw_json, '$.source.ts_ms')) AS BIGINT
   ) AS source_ts_ms,
