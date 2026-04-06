@@ -88,7 +88,10 @@ else:
       print(f"{j.get('jid','-'):<35} {j.get('state','-'):<12} {j.get('name','-')}")
 PY
 
-  mapfile -t running_ids < <(python3 - <<'PY' "${flink_jobs}"
+  running_ids=()
+  while IFS= read -r line; do
+    [[ -n "${line}" ]] && running_ids+=("${line}")
+  done < <(python3 - <<'PY' "${flink_jobs}"
 import json, sys
 for j in json.loads(sys.argv[1]).get("jobs", []):
     if (j.get("state") or "").upper() == "RUNNING":
