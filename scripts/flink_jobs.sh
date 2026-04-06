@@ -48,7 +48,10 @@ cancel_insert_running() {
     exit 1
   fi
 
-  mapfile -t ids < <(python3 - <<'PY' "${payload}"
+  ids=()
+  while IFS= read -r line; do
+    [[ -n "${line}" ]] && ids+=("${line}")
+  done < <(python3 - <<'PY' "${payload}"
 import json, sys
 jobs = json.loads(sys.argv[1]).get("jobs", [])
 for j in jobs:
