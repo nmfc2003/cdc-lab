@@ -1,129 +1,93 @@
-# Local CDC Lab (PostgreSQL → Debezium → Kafka → Flink → Iceberg)
+# Local CDC Lakehouse Lab — Phase 2
 
-A deterministic local lab for learning CDC end to end:
+Postgres -> Debezium -> Kafka -> Flink -> Iceberg Bronze -> Spark Structured Streaming -> Iceberg Silver -> dbt -> Gold marts.
 
-1. PostgreSQL emits row changes (logical replication).
-2. Debezium in Kafka Connect captures changes into Kafka.
-3. Flink reads Kafka values as raw JSON append events.
-4. Flink writes append-only bronze rows to Iceberg on local filesystem.
+## Architecture (text diagram)
 
-## Stack
-- PostgreSQL 16 (logical replication enabled)
-- Bitnami Legacy Kafka `4.0.0-debian-12-r10` (single-node KRaft, configurable via `KAFKA_IMAGE`)
-- Debezium Connect 2.7.3.Final
-- Flink 1.18.1
-- Iceberg Flink runtime 1.5.2 (Hadoop catalog on local FS)
-- Kafka UI 0.7.2
+```text
+Postgres (customers/orders/payments/transactions)
+  -> Debezium Postgres connector
+  -> Kafka topics (cdc_lab_pg.public.*)
+  -> Flink SQL (raw JSON extraction, append-only)
+  -> Iceberg bronze.*_bronze
+  -> Spark Structured Streaming (dedup/latest-state merge)
+  -> Iceberg silver.*_silver
+  -> dbt-spark models/tests
+  -> Iceberg gold.*_gold
+```
 
-## Bronze ingestion design (append-only raw events)
+## Semantics
 
-Bronze ingestion intentionally does **not** use Debezium changelog semantics in Flink.
+### Bronze
+- Append-only by design.
+- One Kafka message => one Bronze row.
+- No upsert semantics.
+- Duplicates preserved.
+- `raw_json` preserved for debugging/replay.
 
-Why:
-- Bronze here is a raw event log for learning and replay.
-- For local reliability, each Kafka message should map to one appended Iceberg row.
-- Changelog semantics can introduce retraction/upsert behavior that is unnecessary for bronze and confusing in local labs.
+### Silver
+- Latest-state tables keyed by source PK.
+- Dedup ordering: `source_ts_ms DESC`, tie-break `kafka_event_ts DESC`.
+- CDC deletes (`op='d'`) are explicitly removed from Silver.
+- Lineage retained: `bronze_op`, `bronze_source_ts_ms`, `bronze_kafka_event_ts`.
 
-How:
-- Kafka source uses `value.format = raw` so every record is read as `raw_json`.
-- Flink SQL extracts envelope fields with `JSON_VALUE`.
-- Iceberg bronze table has no PK and no merge/delete behavior.
-- `c/u/d/r` events are all appended; delete events map using `before` payload values.
+### Gold (dbt)
+- Business marts built from Silver:
+  - `customer_order_summary_gold`
+  - `order_payment_status_gold`
+  - `daily_revenue_gold`
+- dbt tests include key not-null/uniqueness checks for gold + silver PK assertions.
 
-## Bronze schema
+## Deterministic local state
 
-`local_iceberg.bronze.orders_bronze`
-- `kafka_event_ts TIMESTAMP_LTZ(3)`
-- `op STRING`
-- `order_id BIGINT`
-- `customer_id BIGINT`
-- `status STRING`
-- `amount DECIMAL(12,2)`
-- `source_ts_ms BIGINT`
-- `raw_json STRING`
+- `./data/iceberg`
+- `./data/flink-checkpoints`
+- `./data/spark-checkpoints`
+- `./output`
+- `./dbt`
 
-## Exact startup sequence
+## Commands
 
-From a clean checkout:
-
+### Startup
 ```bash
 ./scripts/reset_hard.sh
 ./scripts/up.sh
-./scripts/run_flink_sql.sh --replace
-./scripts/status.sh
 ```
 
-## Exact validation sequence (non-interactive)
+### Start Bronze ingestion (Flink)
+```bash
+./scripts/start_bronze.sh
+```
 
-End-to-end validation does not depend on interactive Flink SQL client sessions.
+### Start Silver streaming (Spark Structured Streaming)
+```bash
+./scripts/start_silver.sh
+```
 
+### Insert sample source data
+```bash
+./scripts/insert_sample_data.sh
+```
+
+### Build Gold marts (dbt)
+```bash
+./scripts/run_dbt_gold.sh
+```
+
+### Validate layers
 ```bash
 ./scripts/validate_bronze.sh
+./scripts/validate_silver.sh
+./scripts/validate_gold.sh
 ```
 
-`validate_bronze.sh` runs all checks and fails loudly if any step fails:
-- starts/validates stack health
-- ensures Flink bronze INSERT job is running
-- inserts one unique Postgres test row
-- verifies Kafka topic contains that marker event
-- verifies Flink INSERT job is running
-- verifies at least one completed checkpoint exists
-- verifies Iceberg metadata + parquet files exist
-- verifies Iceberg snapshot row count is `> 0`
-- verifies Iceberg row count increased after marker insert
-
-## Individual validation commands
-
+### Full Phase 2 validation flow
 ```bash
-./scripts/insert_test_order.sh
-./scripts/check_iceberg_files.sh
-./scripts/check_iceberg_rows.sh
-./scripts/check_iceberg.sh
-./scripts/status.sh
+./scripts/validate_phase2_flow.sh
 ```
 
-## Exact reset sequence
-
-Soft reset (preserve volumes and local state):
+### Reset
 ```bash
 ./scripts/reset_soft.sh
-```
-
-Hard reset (fully clean state):
-```bash
 ./scripts/reset_hard.sh
-```
-
-Hard reset removes:
-- containers
-- compose volumes
-- `./data/iceberg`
-- `./data/flink-checkpoints`
-- `./output`
-
-## State contract
-
-| Subsystem | Persisted state | Where it lives | Kept by `reset_soft.sh` | Cleared by `reset_hard.sh` |
-|---|---|---|---|---|
-| PostgreSQL | tables, WAL, replication metadata | compose volume `postgres_data` | Yes | Yes |
-| Kafka | topics, messages, consumer groups, Connect internal topics | compose volume `kafka_data` | Yes | Yes |
-| Flink | checkpoint state | `./data/flink-checkpoints` bind mount | Yes | Yes |
-| Iceberg | warehouse metadata + data files | `./data/iceberg` bind mount | Yes | Yes |
-| Local output | JSONL/debug output | `./output` | Yes | Yes |
-
-## Flink lifecycle
-
-Submit bronze pipeline:
-```bash
-./scripts/run_flink_sql.sh
-```
-
-Replace previous bronze INSERT job safely:
-```bash
-./scripts/run_flink_sql.sh --replace
-```
-
-Inspect jobs:
-```bash
-./scripts/flink_jobs.sh list
 ```

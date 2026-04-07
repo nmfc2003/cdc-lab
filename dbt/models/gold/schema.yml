@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: customer_order_summary_gold
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+  - name: order_payment_status_gold
+    columns:
+      - name: order_id
+        tests: [not_null, unique]
+  - name: daily_revenue_gold
+    columns:
+      - name: revenue_date
+        tests: [not_null, unique]

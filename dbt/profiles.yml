@@ -1,0 +1,17 @@
+cdc_lab:
+  target: dev
+  outputs:
+    dev:
+      type: spark
+      method: session
+      schema: gold
+      host: localhost
+      connect_retries: 1
+      connect_timeout: 10
+      threads: 4
+      spark_conf:
+        spark.sql.catalog.local_iceberg: org.apache.iceberg.spark.SparkCatalog
+        spark.sql.catalog.local_iceberg.type: hadoop
+        spark.sql.catalog.local_iceberg.warehouse: file:///data/iceberg
+        spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions
+        spark.jars.packages: org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2
