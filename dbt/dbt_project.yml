@@ -1,0 +1,13 @@
+name: cdc_lab
+version: '1.0.0'
+config-version: 2
+profile: cdc_lab
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  cdc_lab:
+    +materialized: table
+    gold:
+      +schema: gold
