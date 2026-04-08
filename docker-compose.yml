@@ -182,16 +182,6 @@ services:
       flink-jobmanager:
         condition: service_started
 
-  spark:
-    image: bitnami/spark:3.5.1
-    container_name: cdc-spark
-    command: ["/bin/bash", "-lc", "sleep infinity"]
-    volumes:
-      - ./spark/jobs:/opt/spark/jobs
-      - ./data/iceberg:/data/iceberg
-      - ./data/spark-checkpoints:/data/spark-checkpoints
-      - ./output:/output
-
   dbt:
     build:
       context: .

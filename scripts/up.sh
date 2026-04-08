@@ -4,7 +4,7 @@ set -euo pipefail
 mkdir -p data/iceberg data/flink-checkpoints data/spark-checkpoints output dbt
 
 # Bring up core CDC services first.
-docker compose up -d postgres kafka kafka-init kafka-connect kafka-ui spark
+docker compose up -d postgres kafka kafka-init kafka-connect kafka-ui
 
 # Force recreate so connector registration runs every startup (idempotent via PUT).
 docker compose up -d --force-recreate connector-init
