@@ -3,11 +3,16 @@ set -euo pipefail
 
 SQL_FILE="flink/sql/init.sql"
 REPLACE_RUNNING="false"
+ALLOW_CONCURRENT="false"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --replace)
       REPLACE_RUNNING="true"
+      shift
+      ;;
+    --allow-concurrent)
+      ALLOW_CONCURRENT="true"
       shift
       ;;
     *)
@@ -44,11 +49,11 @@ fi
 if [[ "${REPLACE_RUNNING}" == "true" ]]; then
   echo "Cancelling RUNNING Flink INSERT jobs before submission (--replace enabled)..."
   "$(dirname "$0")/flink_jobs.sh" cancel --insert-running
-else
+elif [[ "${ALLOW_CONCURRENT}" != "true" ]]; then
   running_insert_jobs="$("$(dirname "$0")/flink_jobs.sh" list | grep -E 'RUNNING[[:space:]]+insert-into|RUNNING[[:space:]]+InsertInto' | wc -l | tr -d ' ' || true)"
   if [[ "${running_insert_jobs}" != "0" ]]; then
     echo "ERROR: Detected existing RUNNING INSERT job(s)." >&2
-    echo "Use --replace to cancel existing INSERT job(s) before re-submitting." >&2
+    echo "Use --replace to cancel existing INSERT job(s), or --allow-concurrent for multi-job mode." >&2
     exit 1
   fi
 fi
@@ -61,7 +66,6 @@ trap 'rm -f "${tmp_out}"' EXIT
 
 docker compose exec -T flink-jobmanager /opt/flink/bin/sql-client.sh -f "${sql_in_container}" 2>&1 | tee "${tmp_out}"
 
-# Portable, defensive SQL-client error detection.
 if grep -Eqi '\[ERROR\]|Could not execute SQL statement|ClassNotFoundException|TableException|ValidationException|SqlParserException|ProgramInvocationException|Exception in thread' "${tmp_out}"; then
   echo "ERROR: Flink SQL execution reported errors. See output above." >&2
   exit 1

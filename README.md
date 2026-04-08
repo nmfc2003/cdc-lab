@@ -1,42 +1,47 @@
-# Local CDC Lakehouse Lab — Phase 2
+# Local CDC Lakehouse Lab — Standardized Architecture
 
-Postgres -> Debezium -> Kafka -> Flink -> Iceberg Bronze -> Spark Structured Streaming -> Iceberg Silver -> dbt -> Gold marts.
+## Business Architecture
 
-## Architecture (text diagram)
+### Main route (implemented)
+`Postgres -> Debezium -> Kafka -> Flink -> Iceberg Bronze -> Flink -> Iceberg Silver`
 
-```text
-Postgres (customers/orders/payments/transactions)
-  -> Debezium Postgres connector
-  -> Kafka topics (cdc_lab_pg.public.*)
-  -> Flink SQL (raw JSON extraction, append-only)
-  -> Iceberg bronze.*_bronze
-  -> Spark Structured Streaming (dedup/latest-state merge)
-  -> Iceberg silver.*_silver
-  -> dbt-spark models/tests
-  -> Iceberg gold.*_gold
-```
+### Branch 2 (implemented now)
+`Silver -> Spark/dbt -> Gold`
 
-## Semantics
+### Branch 1 (intentionally deferred)
+`Silver -> Flink -> Redis/Kafka`
 
-### Bronze
-- Append-only by design.
-- One Kafka message => one Bronze row.
-- No upsert semantics.
-- Duplicates preserved.
-- `raw_json` preserved for debugging/replay.
+## Why Silver is the SSOT
 
-### Silver
-- Latest-state tables keyed by source PK.
-- Dedup ordering: `source_ts_ms DESC`, tie-break `kafka_event_ts DESC`.
-- CDC deletes (`op='d'`) are explicitly removed from Silver.
-- Lineage retained: `bronze_op`, `bronze_source_ts_ms`, `bronze_kafka_event_ts`.
+Silver is the near-real-time **operational source of truth** in the lakehouse:
+- Bronze is immutable/raw and intentionally noisy (duplicates + all CDC ops).
+- Silver applies deterministic latest-state semantics by business key.
+- Downstream serving and analytics should consume curated Silver state, not raw Bronze.
 
-### Gold (dbt)
-- Business marts built from Silver:
-  - `customer_order_summary_gold`
-  - `order_payment_status_gold`
-  - `daily_revenue_gold`
-- dbt tests include key not-null/uniqueness checks for gold + silver PK assertions.
+## Why Redis/Kafka serving branch is deferred
+
+Redis/Kafka serving from Silver is a product-serving concern (cache/query SLA, fanout, invalidation policy).
+This repo phase focuses on a robust SSOT core (Bronze + Silver) and an analytics branch (Gold).
+Serving branch extension points are preserved in docs/scripts naming, but implementation is deferred intentionally.
+
+## Layer semantics
+
+### Bronze (append-only contract)
+- one Kafka CDC message => one Bronze row
+- duplicates allowed
+- no upserts/deletes in Bronze
+- `raw_json` preserved
+
+### Silver (Flink latest-state contract)
+- deduplicate by business PK
+- latest wins by `source_ts_ms DESC`, `kafka_event_ts DESC`
+- if latest event is delete (`op='d'`), row is removed from Silver
+- lineage retained: `bronze_op`, `bronze_source_ts_ms`, `bronze_kafka_event_ts`
+
+### Gold (Spark/dbt analytics contract)
+- Spark is used for batch SQL execution against Iceberg locally
+- dbt defines and tests business marts
+- refresh cadence of every few minutes is acceptable
 
 ## Deterministic local state
 
@@ -46,47 +51,29 @@ Postgres (customers/orders/payments/transactions)
 - `./output`
 - `./dbt`
 
-## Commands
+## Exact run order
 
-### Startup
 ```bash
 ./scripts/reset_hard.sh
 ./scripts/up.sh
-```
-
-### Start Bronze ingestion (Flink)
-```bash
 ./scripts/start_bronze.sh
-```
-
-### Start Silver streaming (Spark Structured Streaming)
-```bash
-./scripts/start_silver.sh
-```
-
-### Insert sample source data
-```bash
+./scripts/run_flink_sql.sh flink/sql/silver.sql --allow-concurrent
 ./scripts/insert_sample_data.sh
-```
-
-### Build Gold marts (dbt)
-```bash
-./scripts/run_dbt_gold.sh
-```
-
-### Validate layers
-```bash
 ./scripts/validate_bronze.sh
 ./scripts/validate_silver.sh
+./scripts/run_dbt_gold.sh
 ./scripts/validate_gold.sh
 ```
 
-### Full Phase 2 validation flow
+## Convenience flows
+
 ```bash
+./scripts/start_silver.sh
 ./scripts/validate_phase2_flow.sh
 ```
 
-### Reset
+## Reset
+
 ```bash
 ./scripts/reset_soft.sh
 ./scripts/reset_hard.sh

@@ -3,11 +3,11 @@ set -euo pipefail
 
 ./scripts/up.sh
 ./scripts/start_bronze.sh
-./scripts/start_silver.sh
+./scripts/run_flink_sql.sh flink/sql/silver.sql --allow-concurrent
 ./scripts/insert_sample_data.sh
 
-echo "Waiting 30s for Bronze and Silver propagation..."
-sleep 30
+echo "Waiting 45s for Bronze and Silver propagation..."
+sleep 45
 
 ./scripts/validate_bronze.sh
 ./scripts/validate_silver.sh
