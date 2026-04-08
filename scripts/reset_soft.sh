@@ -3,4 +3,4 @@ set -euo pipefail
 
 docker compose down --remove-orphans
 
-echo "Soft reset complete: containers removed, volumes and local state preserved."
+echo "Soft reset complete: containers stopped/removed; persisted state kept."
