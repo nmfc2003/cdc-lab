@@ -72,7 +72,10 @@ services:
         /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic connect-configs --partitions 1 --replication-factor 1 --config cleanup.policy=compact
         /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic connect-offsets --partitions 25 --replication-factor 1 --config cleanup.policy=compact
         /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic connect-status --partitions 5 --replication-factor 1 --config cleanup.policy=compact
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic cdc_lab_pg.public.customers --partitions 1 --replication-factor 1
         /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic cdc_lab_pg.public.orders --partitions 1 --replication-factor 1
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic cdc_lab_pg.public.payments --partitions 1 --replication-factor 1
+        /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic cdc_lab_pg.public.transactions --partitions 1 --replication-factor 1
 
   kafka-connect:
     image: debezium/connect:2.7.3.Final
@@ -178,6 +181,26 @@ services:
     depends_on:
       flink-jobmanager:
         condition: service_started
+
+  spark:
+    image: bitnami/spark:3.5.1
+    container_name: cdc-spark
+    command: ["/bin/bash", "-lc", "sleep infinity"]
+    volumes:
+      - ./spark/jobs:/opt/spark/jobs
+      - ./data/iceberg:/data/iceberg
+      - ./data/spark-checkpoints:/data/spark-checkpoints
+      - ./output:/output
+
+  dbt:
+    build:
+      context: .
+      dockerfile: dbt/Dockerfile
+    container_name: cdc-dbt
+    volumes:
+      - ./dbt:/dbt
+      - ./data/iceberg:/data/iceberg
+      - ./output:/output
 
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2

@@ -11,7 +11,7 @@
   "slot.name": "cdc_lab_slot",
   "publication.name": "cdc_lab_publication",
   "publication.autocreate.mode": "disabled",
-  "table.include.list": "public.orders",
+  "table.include.list": "public.customers,public.orders,public.payments,public.transactions",
   "tombstones.on.delete": "false",
   "include.schema.changes": "false",
   "decimal.handling.mode": "string",

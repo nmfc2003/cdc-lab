@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: silver
+    schema: silver
+    database: local_iceberg
+    tables:
+      - name: customers_silver
+      - name: orders_silver
+      - name: payments_silver
+      - name: transactions_silver
